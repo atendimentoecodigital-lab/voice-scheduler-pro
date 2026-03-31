@@ -1,10 +1,82 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
+
+type Settings = {
+  max_meetings_per_day: string;
+  max_attempts: string;
+  allowed_days: string;
+  vapi_api_key: string;
+  calendar_id: string;
+};
+
+const DEFAULT: Settings = {
+  max_meetings_per_day: "3",
+  max_attempts: "3",
+  allowed_days: "2,3,4",
+  vapi_api_key: "",
+  calendar_id: "primary",
+};
+
+const DAY_LABELS: Record<string, string> = { "1": "Seg", "2": "Ter", "3": "Qua", "4": "Qui", "5": "Sex" };
+const ALL_DAYS = ["1", "2", "3", "4", "5"];
 
 export default function SettingsPage() {
-  const handleSave = () => toast.success("Configurações salvas! (simulação)");
+  const [settings, setSettings] = useState<Settings>(DEFAULT);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data } = await supabase.from("settings").select("key, value");
+        if (data && data.length > 0) {
+          const map: any = {};
+          data.forEach((row: any) => { map[row.key] = row.value; });
+          setSettings((prev) => ({ ...prev, ...map }));
+        }
+      } catch {
+        // use defaults
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const toggleDay = (day: string) => {
+    const days = settings.allowed_days.split(",").filter(Boolean);
+    const updated = days.includes(day) ? days.filter((d) => d !== day) : [...days, day].sort();
+    setSettings((s) => ({ ...s, allowed_days: updated.join(",") }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const rows = Object.entries(settings).map(([key, value]) => ({ key, value }));
+      for (const row of rows) {
+        await supabase.from("settings").upsert(
+          { key: row.key, value: row.value, updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
+      }
+      toast.success("Configurações salvas!");
+    } catch {
+      toast.error("Erro ao salvar. Verifique a conexão com o Supabase.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const enabledDays = settings.allowed_days.split(",").filter(Boolean);
+
+  if (loading) {
+    return <div className="p-8 text-sm text-muted-foreground">Carregando configurações...</div>;
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -13,82 +85,12 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground mt-1">Regras de agendamento e integrações</p>
       </div>
 
-      {/* Scheduling rules */}
       <div className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h3 className="text-base font-semibold text-foreground">Regras de Agendamento</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Máximo de reuniões/dia</Label>
-            <Input type="number" defaultValue={3} />
-          </div>
-          <div className="space-y-2">
-            <Label>Máximo de tentativas</Label>
-            <Input type="number" defaultValue={3} />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Dias permitidos</Label>
-          <div className="flex gap-2">
-            {["Seg", "Ter", "Qua", "Qui", "Sex"].map((day) => {
-              const enabled = ["Ter", "Qua", "Qui"].includes(day);
-              return (
-                <button
-                  key={day}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                    enabled
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted text-muted-foreground border-border"
-                  }`}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Horários fixos</Label>
-          <div className="flex gap-2">
-            {["14:00", "15:00", "16:00"].map((time) => (
-              <div key={time} className="px-4 py-2 rounded-lg text-sm font-medium bg-primary/10 text-primary border border-primary/20">
-                {time}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Voice AI */}
-      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-        <h3 className="text-base font-semibold text-foreground">IA de Voz</h3>
-        <div className="space-y-2">
-          <Label>Provedor</Label>
-          <Input defaultValue="Vapi" disabled />
-        </div>
-        <div className="space-y-2">
-          <Label>API Key</Label>
-          <Input type="password" placeholder="sk-..." />
-        </div>
-        <div className="space-y-2">
-          <Label>Intervalo entre tentativas (horas)</Label>
-          <Input type="number" defaultValue={24} />
-        </div>
-      </div>
-
-      {/* Google Calendar */}
-      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-        <h3 className="text-base font-semibold text-foreground">Google Calendar</h3>
-        <div className="space-y-2">
-          <Label>Service Account Email</Label>
-          <Input placeholder="bot@project.iam.gserviceaccount.com" />
-        </div>
-        <div className="space-y-2">
-          <Label>Calendar ID</Label>
-          <Input placeholder="primary" />
-        </div>
-      </div>
-
-      <Button onClick={handleSave}>Salvar Configurações</Button>
-    </div>
-  );
-}
+            <Input
+              type="number"
+              value={settings.max_meetings_per_day}
+              onChange

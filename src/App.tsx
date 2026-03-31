@@ -9,6 +9,7 @@ import Clients from "@/pages/Clients";
 import Appointments from "@/pages/Appointments";
 import Calls from "@/pages/Calls";
 import SettingsPage from "@/pages/SettingsPage";
+import GoogleAuthCallback from "@/pages/GoogleAuthCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/auth/callback" element={<GoogleAuthCallback />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/clientes" element={<Clients />} />
