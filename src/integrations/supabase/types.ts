@@ -14,7 +14,181 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          created_at: string | null
+          date: string | null
+          google_event_id: string | null
+          id: string
+          meet_link: string | null
+          status: string | null
+          time: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          date?: string | null
+          google_event_id?: string | null
+          id?: string
+          meet_link?: string | null
+          status?: string | null
+          time?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string | null
+          date?: string | null
+          google_event_id?: string | null
+          id?: string
+          meet_link?: string | null
+          status?: string | null
+          time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_logs: {
+        Row: {
+          attempt_number: number | null
+          client_id: string | null
+          client_name: string | null
+          duration: number | null
+          id: string
+          phone: string | null
+          result: string | null
+          started_at: string | null
+          transcript: string | null
+        }
+        Insert: {
+          attempt_number?: number | null
+          client_id?: string | null
+          client_name?: string | null
+          duration?: number | null
+          id?: string
+          phone?: string | null
+          result?: string | null
+          started_at?: string | null
+          transcript?: string | null
+        }
+        Update: {
+          attempt_number?: number | null
+          client_id?: string | null
+          client_name?: string | null
+          duration?: number | null
+          id?: string
+          phone?: string | null
+          result?: string | null
+          started_at?: string | null
+          transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          company: string | null
+          contact_attempts: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          last_contact_at: string | null
+          max_attempts: number | null
+          name: string | null
+          phone: string | null
+          status: string | null
+        }
+        Insert: {
+          company?: string | null
+          contact_attempts?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_contact_at?: string | null
+          max_attempts?: number | null
+          name?: string | null
+          phone?: string | null
+          status?: string | null
+        }
+        Update: {
+          company?: string | null
+          contact_attempts?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_contact_at?: string | null
+          max_attempts?: number | null
+          name?: string | null
+          phone?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      google_tokens: {
+        Row: {
+          access_token: string | null
+          created_at: string | null
+          expiry: string | null
+          id: string
+          refresh_token: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string | null
+          expiry?: string | null
+          id?: string
+          refresh_token?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string | null
+          expiry?: string | null
+          id?: string
+          refresh_token?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          id: string
+          key: string | null
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          id?: string
+          key?: string | null
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string | null
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
