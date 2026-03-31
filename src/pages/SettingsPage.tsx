@@ -66,7 +66,7 @@ export default function SettingsPage() {
       }
       toast.success("Configurações salvas!");
     } catch {
-      toast.error("Erro ao salvar. Verifique a conexão com o Supabase.");
+      toast.error("Erro ao salvar. Verifique a conexão.");
     } finally {
       setSaving(false);
     }
@@ -93,4 +93,61 @@ export default function SettingsPage() {
             <Input
               type="number"
               value={settings.max_meetings_per_day}
-              onChange
+              onChange={(e) => setSettings((s) => ({ ...s, max_meetings_per_day: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Máximo de tentativas</Label>
+            <Input
+              type="number"
+              value={settings.max_attempts}
+              onChange={(e) => setSettings((s) => ({ ...s, max_attempts: e.target.value }))}
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Dias permitidos</Label>
+          <div className="flex gap-2">
+            {ALL_DAYS.map((day) => (
+              <Button
+                key={day}
+                type="button"
+                variant={enabledDays.includes(day) ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleDay(day)}
+                className={cn("min-w-[48px]")}
+              >
+                {DAY_LABELS[day]}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h3 className="text-base font-semibold text-foreground">Integrações</h3>
+        <div className="space-y-2">
+          <Label>VAPI API Key</Label>
+          <Input
+            type="password"
+            value={settings.vapi_api_key}
+            onChange={(e) => setSettings((s) => ({ ...s, vapi_api_key: e.target.value }))}
+            placeholder="sk-..."
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Google Calendar ID</Label>
+          <Input
+            value={settings.calendar_id}
+            onChange={(e) => setSettings((s) => ({ ...s, calendar_id: e.target.value }))}
+            placeholder="primary"
+          />
+        </div>
+      </div>
+
+      <Button onClick={handleSave} disabled={saving}>
+        {saving ? "Salvando..." : "Salvar Configurações"}
+      </Button>
+    </div>
+  );
+}
