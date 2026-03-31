@@ -110,4 +110,13 @@ export default function Dashboard() {
               <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
               <Bar dataKey="ligacoes" fill="hsl(var(--primary))" radius={[4,4,0,0]} name="Ligações" />
-              <Bar dataKey="agendadas" fill="hsl(var(--success))" ra
+              <Bar dataKey="agendadas" fill="hsl(var(--accent))" radius={[4,4,0,0]} name="Agendadas" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <RecentActivity calls={calls} />
+      </div>
+    </div>
+  );
+}

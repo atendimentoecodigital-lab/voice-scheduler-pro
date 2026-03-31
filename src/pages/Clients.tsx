@@ -69,7 +69,7 @@ export default function Clients() {
           <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {clients.length} clientes cadastrados
-            {usingMock && <span className="ml-2 text-warning text-xs">(modo demo)</span>}
+            {usingMock && <span className="ml-2 text-yellow-500 text-xs">(modo demo)</span>}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -99,4 +99,79 @@ export default function Clients() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
-            <SelectItem va
+            <SelectItem value="pendente">Pendente</SelectItem>
+            <SelectItem value="em_contato">Em Contato</SelectItem>
+            <SelectItem value="agendado">Agendado</SelectItem>
+            <SelectItem value="nao_atendeu">Não Atendeu</SelectItem>
+            <SelectItem value="recusou">Recusou</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>Empresa</TableHead>
+              <TableHead>Telefone</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Tentativas</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  Nenhum cliente encontrado
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((client) => (
+                <TableRow key={client.id}>
+                  <TableCell className="font-medium">{client.name}</TableCell>
+                  <TableCell>{client.company}</TableCell>
+                  <TableCell>{client.phone}</TableCell>
+                  <TableCell>{client.email}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={client.status} />
+                  </TableCell>
+                  <TableCell>{client.contact_attempts}/{client.max_attempts}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => { setEditingClient(client); setDialogOpen(true); }}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => handleDelete(client.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <ClientDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        client={editingClient ? toDialogClient(editingClient) : undefined}
+        onSave={handleSave}
+      />
+    </div>
+  );
+}
