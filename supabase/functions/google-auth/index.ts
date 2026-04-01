@@ -2,8 +2,7 @@ const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID')!
-const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET')!
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+const GOOGLE_REDIRECT_URI = Deno.env.get('GOOGLE_REDIRECT_URI')!
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
