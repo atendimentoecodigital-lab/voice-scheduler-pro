@@ -1,13 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+// Re-export the auto-managed Supabase client
+export { supabase } from "@/integrations/supabase/client";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-export const supabase = createClient(
-  supabaseUrl || "https://placeholder.supabase.co",
-  supabaseAnonKey || "placeholder"
-);
-
+// DB-shaped types (snake_case matching database columns)
 export type Client = {
   id: string;
   name: string;
