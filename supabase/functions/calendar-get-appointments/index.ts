@@ -52,34 +52,28 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const accessToken = await getAccessToken(supabase)
 
-    if (!accessToken) {
-      return new Response(JSON.stringify({ error: 'not_connected', appointments: [] }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    // Check if Google is connected (for status indicator) but always read from DB
+    const isConnected = !!accessToken
 
-    const now = new Date()
-    const timeMin = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
-    const timeMax = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate()).toISOString()
+    const { data: dbApts, error } = await supabase
+      .from('appointments')
+      .select('*')
+      .order('date', { ascending: true })
 
-    const calRes = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    )
-    const calData = await calRes.json()
+    if (error) throw error
 
-    const appointments = (calData.items || []).map((event: any) => ({
-      id: event.id,
-      clientId: '',
-      clientName: event.summary || 'Sem título',
-      date: event.start?.date || event.start?.dateTime?.split('T')[0] || '',
-      time: event.start?.dateTime ? new Date(event.start.dateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '',
-      meetLink: event.hangoutLink || '',
-      status: event.status === 'cancelled' ? 'cancelado' : 'confirmado',
-      createdAt: event.created || '',
+    const appointments = (dbApts || []).map((a: any) => ({
+      id: a.id,
+      clientId: a.client_id || '',
+      clientName: a.client_name || 'Sem título',
+      date: a.date || '',
+      time: a.time || '',
+      meetLink: a.meet_link || '',
+      status: a.status || 'pendente',
+      createdAt: a.created_at?.split('T')[0] || '',
     }))
 
-    return new Response(JSON.stringify({ appointments }), {
+    return new Response(JSON.stringify({ appointments, connected: isConnected }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
