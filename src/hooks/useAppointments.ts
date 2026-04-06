@@ -36,38 +36,10 @@ export function useAppointments() {
       const aptsData = aptsRes.data;
       const availData = availRes.data;
 
-      if (aptsData?.error === "not_connected") {
-        const { data: dbApts } = await supabase
-          .from("appointments")
-          .select("*")
-          .order("date", { ascending: true });
-
-        if (dbApts && dbApts.length > 0) {
-          setAppointments(
-            dbApts.map((a: any) => ({
-              id: a.id,
-              clientId: a.client_id || "",
-              clientName: a.client_name,
-              date: a.date,
-              time: a.time,
-              meetLink: a.meet_link || "",
-              status: a.status,
-              createdAt: a.created_at?.split("T")[0] || a.date,
-            }))
-          );
-        } else {
-          setAppointments(mockAppointments);
-          setUsingMock(true);
-        }
-
-        setAvailability(availData?.availability || mockAvailability);
-        setConnected(false);
-      } else {
-        setAppointments(aptsData?.appointments || []);
-        setAvailability(availData?.availability || []);
-        setConnected(true);
-        setUsingMock(false);
-      }
+      setAppointments(aptsData?.appointments || []);
+      setAvailability(availData?.availability || mockAvailability);
+      setConnected(aptsData?.connected ?? false);
+      setUsingMock(false);
     } catch {
       setAppointments(mockAppointments);
       setAvailability(mockAvailability);
