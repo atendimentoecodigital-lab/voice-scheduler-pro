@@ -67,6 +67,7 @@ export function useAppointments() {
         time: params.time,
         attendeeEmail: params.attendeeEmail,
         clientId: params.clientId,
+        team: params.team,
       },
     });
     if (error) throw error;
