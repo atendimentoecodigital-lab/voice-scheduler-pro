@@ -1,14 +1,14 @@
 import { Client, Appointment, CallLog, DashboardStats, DayAvailability } from "@/types";
 
-export const mockClients: Client[] = [
-  { id: "1", name: "João Silva", phone: "(11) 99999-0001", email: "joao@empresa.com", company: "Tech Solutions", status: "pendente", contactAttempts: 0, maxAttempts: 3, lastContactAt: null, createdAt: "2026-03-20" },
-  { id: "2", name: "Maria Santos", phone: "(11) 99999-0002", email: "maria@startup.io", company: "StartUp Labs", status: "em_contato", contactAttempts: 1, maxAttempts: 3, lastContactAt: "2026-03-24T14:30:00", createdAt: "2026-03-18" },
-  { id: "3", name: "Pedro Costa", phone: "(11) 99999-0003", email: "pedro@digital.com", company: "Digital First", status: "agendado", contactAttempts: 2, maxAttempts: 3, lastContactAt: "2026-03-23T15:00:00", createdAt: "2026-03-15" },
-  { id: "4", name: "Ana Oliveira", phone: "(11) 99999-0004", email: "ana@growth.co", company: "Growth Marketing", status: "nao_atendeu", contactAttempts: 2, maxAttempts: 3, lastContactAt: "2026-03-24T16:00:00", createdAt: "2026-03-19" },
-  { id: "5", name: "Carlos Lima", phone: "(11) 99999-0005", email: "carlos@ecom.br", company: "E-Commerce Plus", status: "recusou", contactAttempts: 1, maxAttempts: 3, lastContactAt: "2026-03-22T14:00:00", createdAt: "2026-03-17" },
-  { id: "6", name: "Fernanda Rocha", phone: "(11) 99999-0006", email: "fer@branding.com", company: "Brand Studio", status: "pendente", contactAttempts: 0, maxAttempts: 3, lastContactAt: null, createdAt: "2026-03-21" },
-  { id: "7", name: "Lucas Mendes", phone: "(11) 99999-0007", email: "lucas@saas.io", company: "SaaS Corp", status: "agendado", contactAttempts: 1, maxAttempts: 3, lastContactAt: "2026-03-25T15:00:00", createdAt: "2026-03-16" },
-  { id: "8", name: "Beatriz Alves", phone: "(11) 99999-0008", email: "bia@design.co", company: "Design Hub", status: "pendente", contactAttempts: 0, maxAttempts: 3, lastContactAt: null, createdAt: "2026-03-22" },
+export const mockClients: (Client & { team?: string })[] = [
+  { id: "1", name: "João Silva", phone: "(11) 99999-0001", email: "joao@empresa.com", company: "Tech Solutions", status: "pendente", contactAttempts: 0, maxAttempts: 3, lastContactAt: null, createdAt: "2026-03-20", team: "siao" },
+  { id: "2", name: "Maria Santos", phone: "(11) 99999-0002", email: "maria@startup.io", company: "StartUp Labs", status: "em_contato", contactAttempts: 1, maxAttempts: 3, lastContactAt: "2026-03-24T14:30:00", createdAt: "2026-03-18", team: "juda" },
+  { id: "3", name: "Pedro Costa", phone: "(11) 99999-0003", email: "pedro@digital.com", company: "Digital First", status: "agendado", contactAttempts: 2, maxAttempts: 3, lastContactAt: "2026-03-23T15:00:00", createdAt: "2026-03-15", team: "arca" },
+  { id: "4", name: "Ana Oliveira", phone: "(11) 99999-0004", email: "ana@growth.co", company: "Growth Marketing", status: "nao_atendeu", contactAttempts: 2, maxAttempts: 3, lastContactAt: "2026-03-24T16:00:00", createdAt: "2026-03-19", team: "siao" },
+  { id: "5", name: "Carlos Lima", phone: "(11) 99999-0005", email: "carlos@ecom.br", company: "E-Commerce Plus", status: "recusou", contactAttempts: 1, maxAttempts: 3, lastContactAt: "2026-03-22T14:00:00", createdAt: "2026-03-17", team: "juda" },
+  { id: "6", name: "Fernanda Rocha", phone: "(11) 99999-0006", email: "fer@branding.com", company: "Brand Studio", status: "pendente", contactAttempts: 0, maxAttempts: 3, lastContactAt: null, createdAt: "2026-03-21", team: "arca" },
+  { id: "7", name: "Lucas Mendes", phone: "(11) 99999-0007", email: "lucas@saas.io", company: "SaaS Corp", status: "agendado", contactAttempts: 1, maxAttempts: 3, lastContactAt: "2026-03-25T15:00:00", createdAt: "2026-03-16", team: "siao" },
+  { id: "8", name: "Beatriz Alves", phone: "(11) 99999-0008", email: "bia@design.co", company: "Design Hub", status: "pendente", contactAttempts: 0, maxAttempts: 3, lastContactAt: null, createdAt: "2026-03-22", team: "juda" },
 ];
 
 export const mockAppointments: Appointment[] = [

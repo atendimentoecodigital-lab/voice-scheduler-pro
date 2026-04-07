@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { title, description, date, time, attendeeEmail, clientId } = await req.json()
+    const { title, description, date, time, attendeeEmail, clientId, team } = await req.json()
 
     if (!date || !time || !title) {
       return new Response(JSON.stringify({ error: 'Missing required fields: title, date, time' }), {
@@ -100,6 +100,7 @@ Deno.serve(async (req) => {
       meet_link: meetLink,
       google_event_id: googleEventId,
       status: 'confirmado',
+      team: team || 'siao',
     }).select().single()
 
     if (error) throw error

@@ -57,6 +57,7 @@ export function useAppointments() {
     time: string;
     attendeeEmail?: string;
     description?: string;
+    team?: string;
   }) => {
     const { data, error } = await supabase.functions.invoke("calendar-create-event", {
       body: {
@@ -66,6 +67,7 @@ export function useAppointments() {
         time: params.time,
         attendeeEmail: params.attendeeEmail,
         clientId: params.clientId,
+        team: params.team,
       },
     });
     if (error) throw error;

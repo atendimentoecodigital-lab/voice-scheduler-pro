@@ -24,6 +24,7 @@ export type Database = {
           id: string
           meet_link: string | null
           status: string | null
+          team: string | null
           time: string | null
         }
         Insert: {
@@ -35,6 +36,7 @@ export type Database = {
           id?: string
           meet_link?: string | null
           status?: string | null
+          team?: string | null
           time?: string | null
         }
         Update: {
@@ -46,6 +48,7 @@ export type Database = {
           id?: string
           meet_link?: string | null
           status?: string | null
+          team?: string | null
           time?: string | null
         }
         Relationships: [
@@ -68,6 +71,7 @@ export type Database = {
           phone: string | null
           result: string | null
           started_at: string | null
+          team: string | null
           transcript: string | null
         }
         Insert: {
@@ -79,6 +83,7 @@ export type Database = {
           phone?: string | null
           result?: string | null
           started_at?: string | null
+          team?: string | null
           transcript?: string | null
         }
         Update: {
@@ -90,6 +95,7 @@ export type Database = {
           phone?: string | null
           result?: string | null
           started_at?: string | null
+          team?: string | null
           transcript?: string | null
         }
         Relationships: [
@@ -114,6 +120,7 @@ export type Database = {
           name: string | null
           phone: string | null
           status: string | null
+          team: string | null
         }
         Insert: {
           company?: string | null
@@ -126,6 +133,7 @@ export type Database = {
           name?: string | null
           phone?: string | null
           status?: string | null
+          team?: string | null
         }
         Update: {
           company?: string | null
@@ -138,6 +146,7 @@ export type Database = {
           name?: string | null
           phone?: string | null
           status?: string | null
+          team?: string | null
         }
         Relationships: []
       }
@@ -186,6 +195,33 @@ export type Database = {
           key?: string | null
           updated_at?: string | null
           value?: string | null
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          color: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
         }
         Relationships: []
       }

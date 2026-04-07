@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAppointments } from "@/hooks/useAppointments";
 import { useClients } from "@/hooks/useClients";
+import { useTeam } from "@/hooks/useTeam";
 
 const statusStyles: Record<string, string> = {
   confirmado: "bg-success/15 text-success",
@@ -18,6 +19,7 @@ const statusStyles: Record<string, string> = {
 };
 
 export default function Appointments() {
+  const { selectedTeam, currentTeam } = useTeam();
   const { appointments, availability, loading, connected, usingMock, load, createAppointment, connectGoogle } =
     useAppointments();
   const { clients } = useClients();
@@ -43,7 +45,8 @@ export default function Appointments() {
         date: form.date,
         time: form.time,
         attendeeEmail: client.email,
-        description: `Reunião de alinhamento com ${client.name} — ${client.company}`,
+        description: `Reunião de alinhamento com ${client.name} — ${client.company} [Equipe: ${currentTeam?.name || selectedTeam}]`,
+        team: selectedTeam,
       });
       toast.success(connected ? "Reunião criada no Google Agenda!" : "Reunião salva localmente!");
       setNewDialog(false);
@@ -100,7 +103,11 @@ export default function Appointments() {
             </div>
           ) : (
             appointments.map((apt) => (
-              <div key={apt.id} className="rounded-xl border border-border bg-card p-4 flex items-center justify-between">
+              <div
+                key={apt.id}
+                className="rounded-xl border border-border bg-card p-4 flex items-center justify-between"
+                style={{ borderLeftWidth: 4, borderLeftColor: currentTeam?.color || "hsl(var(--primary))" }}
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center">
                     <span className="text-xs font-medium text-primary">{apt.date.split("-")[2]}</span>

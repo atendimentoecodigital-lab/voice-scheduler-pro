@@ -13,6 +13,7 @@ export type Client = {
   max_attempts: number;
   last_contact_at: string | null;
   created_at: string;
+  team: string;
 };
 
 export type Appointment = {
@@ -25,6 +26,7 @@ export type Appointment = {
   google_event_id: string;
   status: "confirmado" | "pendente" | "cancelado" | "realizado";
   created_at: string;
+  team: string;
 };
 
 export type CallLog = {
@@ -37,4 +39,5 @@ export type CallLog = {
   result: "agendado" | "nao_atendeu" | "recusou" | "remarcou" | "erro";
   transcript: string;
   attempt_number: number;
+  team: string;
 };
