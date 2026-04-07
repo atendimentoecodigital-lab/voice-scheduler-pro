@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { TeamSelector } from "./TeamSelector";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
@@ -43,6 +44,9 @@ export function AppSidebar() {
           </div>
         )}
       </div>
+
+      {/* Team Selector */}
+      <TeamSelector collapsed={collapsed} />
 
       {/* Nav */}
       <nav className="flex-1 py-4 px-3 space-y-1">

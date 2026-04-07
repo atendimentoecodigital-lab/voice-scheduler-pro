@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { TeamProvider } from "@/hooks/useTeam";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Clients from "@/pages/Clients";
@@ -30,16 +31,18 @@ function ProtectedRoutes() {
   if (!user) return <Navigate to="/auth" replace />;
 
   return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/clientes" element={<Clients />} />
-        <Route path="/agendamentos" element={<Appointments />} />
-        <Route path="/ligacoes" element={<Calls />} />
-        <Route path="/configuracoes" element={<SettingsPage />} />
-      </Route>
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <TeamProvider>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/clientes" element={<Clients />} />
+          <Route path="/agendamentos" element={<Appointments />} />
+          <Route path="/ligacoes" element={<Calls />} />
+          <Route path="/configuracoes" element={<SettingsPage />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </TeamProvider>
   );
 }
 
