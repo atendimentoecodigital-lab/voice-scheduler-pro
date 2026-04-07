@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase, Client } from "@/lib/supabase";
 import { mockClients } from "@/data/mock";
+import { useTeam } from "@/hooks/useTeam";
 
 function toClient(row: any): Client {
   return {
@@ -14,6 +15,7 @@ function toClient(row: any): Client {
     max_attempts: row.max_attempts,
     last_contact_at: row.last_contact_at,
     created_at: row.created_at,
+    team: row.team || "siao",
   };
 }
 
@@ -21,6 +23,7 @@ export function useClients() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [usingMock, setUsingMock] = useState(false);
+  const { selectedTeam } = useTeam();
 
   const load = async () => {
     setLoading(true);
@@ -28,46 +31,30 @@ export function useClients() {
       const { data, error } = await supabase
         .from("clients")
         .select("*")
+        .eq("team", selectedTeam)
         .order("created_at", { ascending: false });
 
       if (error || !data) throw error;
 
-      if (data.length === 0) {
-        await supabase.from("clients").insert(
-          mockClients.map((c) => ({
+      setClients(data.map(toClient));
+      setUsingMock(false);
+    } catch {
+      setClients(
+        mockClients
+          .filter((c) => !c.team || c.team === selectedTeam)
+          .map((c) => ({
+            id: c.id,
             name: c.name,
             phone: c.phone,
             email: c.email,
             company: c.company,
-            status: c.status,
+            status: c.status as Client["status"],
             contact_attempts: c.contactAttempts,
             max_attempts: c.maxAttempts,
             last_contact_at: c.lastContactAt,
+            created_at: c.createdAt,
+            team: c.team || "siao",
           }))
-        );
-        const { data: seeded } = await supabase
-          .from("clients")
-          .select("*")
-          .order("created_at", { ascending: false });
-        setClients((seeded || []).map(toClient));
-      } else {
-        setClients(data.map(toClient));
-      }
-      setUsingMock(false);
-    } catch {
-      setClients(
-        mockClients.map((c) => ({
-          id: c.id,
-          name: c.name,
-          phone: c.phone,
-          email: c.email,
-          company: c.company,
-          status: c.status,
-          contact_attempts: c.contactAttempts,
-          max_attempts: c.maxAttempts,
-          last_contact_at: c.lastContactAt,
-          created_at: c.createdAt,
-        }))
       );
       setUsingMock(true);
     } finally {
@@ -90,13 +77,14 @@ export function useClients() {
         max_attempts: 3,
         last_contact_at: null,
         created_at: new Date().toISOString(),
+        team: selectedTeam,
       };
       setClients((prev) => [newClient, ...prev]);
       return newClient;
     }
     const { data: inserted, error } = await supabase
       .from("clients")
-      .insert({ ...data, status: "pendente", contact_attempts: 0, max_attempts: 3 })
+      .insert({ ...data, status: "pendente", contact_attempts: 0, max_attempts: 3, team: selectedTeam })
       .select()
       .single();
     if (error) throw error;
@@ -125,7 +113,7 @@ export function useClients() {
     setClients((prev) => prev.filter((c) => c.id !== id));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [selectedTeam]);
 
   return { clients, loading, usingMock, addClient, updateClient, deleteClient, reload: load };
 }

@@ -9,9 +9,11 @@ import { Plus, Search, Pencil, Trash2, Filter, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useClients } from "@/hooks/useClients";
+import { useTeam } from "@/hooks/useTeam";
 
 export default function Clients() {
   const { clients, loading, usingMock, addClient, updateClient, deleteClient, reload } = useClients();
+  const { currentTeam, teams } = useTeam();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -24,6 +26,8 @@ export default function Clients() {
     const matchStatus = statusFilter === "todos" || c.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const getTeamColor = (slug: string) => teams.find((t) => t.slug === slug)?.color || "#6B7280";
 
   const handleSave = async (data: { name: string; phone: string; email: string; company: string }) => {
     try {
@@ -69,6 +73,12 @@ export default function Clients() {
           <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {clients.length} clientes cadastrados
+            {currentTeam && (
+              <span className="ml-2 inline-flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: currentTeam.color }} />
+                <span className="text-xs font-medium">{currentTeam.name}</span>
+              </span>
+            )}
             {usingMock && <span className="ml-2 text-yellow-500 text-xs">(modo demo)</span>}
           </p>
         </div>
@@ -112,6 +122,7 @@ export default function Clients() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Equipe</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Empresa</TableHead>
               <TableHead>Telefone</TableHead>
@@ -124,13 +135,18 @@ export default function Clients() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   Nenhum cliente encontrado
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((client) => (
                 <TableRow key={client.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getTeamColor(client.team) }} />
+                    </div>
+                  </TableCell>
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>{client.company}</TableCell>
                   <TableCell>{client.phone}</TableCell>

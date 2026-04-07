@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { mockCallLogs, mockClients } from "@/data/mock";
+import { useState, useEffect } from "react";
+import { mockCallLogs } from "@/data/mock";
 import { Phone, Play, PhoneOff, CalendarCheck, XCircle, Clock, MessageSquare, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { CallLog } from "@/types";
 import { toast } from "sonner";
+import { useTeam } from "@/hooks/useTeam";
+import { supabase } from "@/lib/supabase";
 
 const resultConfig = {
   agendado: { icon: CalendarCheck, label: "Agendado", className: "text-success" },
@@ -16,8 +18,48 @@ const resultConfig = {
 };
 
 export default function Calls() {
+  const { selectedTeam } = useTeam();
   const [transcriptDialog, setTranscriptDialog] = useState<CallLog | null>(null);
-  const pendingClients = mockClients.filter((c) => c.status === "pendente" || c.status === "em_contato");
+  const [callLogs, setCallLogs] = useState<CallLog[]>(mockCallLogs);
+  const [pendingClients, setPendingClients] = useState<any[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [callsRes, clientsRes] = await Promise.all([
+          supabase.from("call_logs").select("*").eq("team", selectedTeam).order("started_at", { ascending: false }),
+          supabase.from("clients").select("*").eq("team", selectedTeam).in("status", ["pendente", "em_contato"]),
+        ]);
+
+        if (callsRes.data && callsRes.data.length > 0) {
+          setCallLogs(callsRes.data.map((c: any) => ({
+            id: c.id,
+            clientId: c.client_id || "",
+            clientName: c.client_name,
+            phone: c.phone,
+            startedAt: c.started_at,
+            duration: c.duration,
+            result: c.result,
+            transcript: c.transcript || "",
+            attemptNumber: c.attempt_number,
+          })));
+        }
+
+        if (clientsRes.data) {
+          setPendingClients(clientsRes.data.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            phone: c.phone,
+            contactAttempts: c.contact_attempts,
+            maxAttempts: c.max_attempts,
+          })));
+        }
+      } catch {
+        // fallback
+      }
+    };
+    load();
+  }, [selectedTeam]);
 
   const handleStartQueue = () => {
     toast.info("Fila de ligações iniciada! (simulação)", { description: `${pendingClients.length} clientes na fila` });
@@ -40,27 +82,31 @@ export default function Calls() {
         <h3 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
           <Bot className="w-4 h-4 text-primary" /> Fila de Ligações
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {pendingClients.map((client) => (
-            <div key={client.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Phone className="w-4 h-4 text-primary" />
+        {pendingClients.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum cliente pendente nesta equipe</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {pendingClients.map((client) => (
+              <div key={client.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Phone className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{client.name}</p>
+                  <p className="text-xs text-muted-foreground">{client.phone}</p>
+                </div>
+                <span className="text-[10px] text-muted-foreground">{client.contactAttempts}/{client.maxAttempts}</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{client.name}</p>
-                <p className="text-xs text-muted-foreground">{client.phone}</p>
-              </div>
-              <span className="text-[10px] text-muted-foreground">{client.contactAttempts}/{client.maxAttempts}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Call Logs */}
       <div className="rounded-xl border border-border bg-card p-5">
         <h3 className="text-base font-semibold text-foreground mb-4">Histórico de Ligações</h3>
         <div className="space-y-2">
-          {mockCallLogs.map((call) => {
+          {callLogs.map((call) => {
             const config = resultConfig[call.result];
             const Icon = config.icon;
             return (
