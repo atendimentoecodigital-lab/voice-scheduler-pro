@@ -21,7 +21,7 @@ const statusStyles: Record<string, string> = {
 export default function Appointments() {
   const { selectedTeam, currentTeam } = useTeam();
   const { appointments, availability, loading, connected, usingMock, load, createAppointment, connectGoogle } =
-    useAppointments();
+    useAppointments(selectedTeam);
   const { clients } = useClients();
 
   const [newDialog, setNewDialog] = useState(false);
