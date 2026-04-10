@@ -6,13 +6,14 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID')!
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET')!
 
-async function getAccessToken(supabase: any): Promise<string | null> {
-  const { data } = await supabase
-    .from('google_tokens')
-    .select('*')
-    .eq('user_id', 'default')
-    .single()
+const TEAM_CALENDARS: Record<string, string> = {
+  arca: 'e38d5610a8720a788c358e19e267d1968f4eeb2b41d86a073d99ae93640dcf14@group.calendar.google.com',
+  juda: '0129971c7ce7226946a90e1945ae5d08cbb67e18f1f2f4f37cec80769b945a02@group.calendar.google.com',
+  siao: 'e97b5158a1c8cc6b0e44096ccb8f99d2b52fd6a25c144573348cc18be3961de0@group.calendar.google.com',
+}
 
+async function getAccessToken(supabase: any): Promise<string | null> {
+  const { data } = await supabase.from('google_tokens').select('*').eq('user_id', 'default').single()
   if (!data) return null
 
   if (new Date(data.expiry) < new Date()) {
@@ -43,16 +44,19 @@ Deno.serve(async (req) => {
 
   try {
     const { title, description, date, time, attendeeEmail, clientId, team } = await req.json()
+    const teamSlug = team || 'siao'
 
     if (!date || !time || !title) {
       return new Response(JSON.stringify({ error: 'Missing required fields: title, date, time' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const accessToken = await getAccessToken(supabase)
+
+    const calendarId = TEAM_CALENDARS[teamSlug] || TEAM_CALENDARS['siao']
+    const teamName = teamSlug.charAt(0).toUpperCase() + teamSlug.slice(1)
 
     let googleEventId = ''
     let meetLink = ''
@@ -64,7 +68,7 @@ Deno.serve(async (req) => {
 
       const event: any = {
         summary: title,
-        description: description || '',
+        description: `[Equipe ${teamName}] ${description || `Reunião de alinhamento com ${title.replace('Reunião — ', '')}`}`,
         start: { dateTime: startDateTime, timeZone: 'America/Sao_Paulo' },
         end: { dateTime: endDateTime, timeZone: 'America/Sao_Paulo' },
         conferenceData: {
@@ -77,13 +81,10 @@ Deno.serve(async (req) => {
       }
 
       const calRes = await fetch(
-        'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1',
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(event),
         }
       )
@@ -95,12 +96,11 @@ Deno.serve(async (req) => {
     const { data: apt, error } = await supabase.from('appointments').insert({
       client_id: clientId || null,
       client_name: title.replace('Reunião — ', ''),
-      date,
-      time,
+      date, time,
       meet_link: meetLink,
       google_event_id: googleEventId,
       status: 'confirmado',
-      team: team || 'siao',
+      team: teamSlug,
     }).select().single()
 
     if (error) throw error
@@ -110,8 +110,7 @@ Deno.serve(async (req) => {
     })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })

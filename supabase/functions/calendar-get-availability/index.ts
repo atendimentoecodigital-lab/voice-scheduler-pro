@@ -6,13 +6,14 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID')!
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET')!
 
-async function getAccessToken(supabase: any): Promise<string | null> {
-  const { data } = await supabase
-    .from('google_tokens')
-    .select('*')
-    .eq('user_id', 'default')
-    .single()
+const TEAM_CALENDARS: Record<string, string> = {
+  arca: 'e38d5610a8720a788c358e19e267d1968f4eeb2b41d86a073d99ae93640dcf14@group.calendar.google.com',
+  juda: '0129971c7ce7226946a90e1945ae5d08cbb67e18f1f2f4f37cec80769b945a02@group.calendar.google.com',
+  siao: 'e97b5158a1c8cc6b0e44096ccb8f99d2b52fd6a25c144573348cc18be3961de0@group.calendar.google.com',
+}
 
+async function getAccessToken(supabase: any): Promise<string | null> {
+  const { data } = await supabase.from('google_tokens').select('*').eq('user_id', 'default').single()
   if (!data) return null
 
   if (new Date(data.expiry) < new Date()) {
@@ -45,12 +46,19 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const accessToken = await getAccessToken(supabase)
 
+    let teamSlug = 'siao'
+    try {
+      const body = await req.json()
+      teamSlug = body.team || 'siao'
+    } catch { /* default */ }
+
     if (!accessToken) {
       return new Response(JSON.stringify({ error: 'not_connected', availability: [] }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
+    const calendarId = TEAM_CALENDARS[teamSlug] || TEAM_CALENDARS['siao']
     const dayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
     const slots = ['14:00', '15:00', '16:00']
     const availability = []
@@ -66,7 +74,7 @@ Deno.serve(async (req) => {
       const timeMax = `${dateStr}T18:00:00Z`
 
       const calRes = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`,
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
       )
       const calData = await calRes.json()
@@ -87,8 +95,7 @@ Deno.serve(async (req) => {
     })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })
