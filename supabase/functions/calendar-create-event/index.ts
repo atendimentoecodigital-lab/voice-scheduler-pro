@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { title, description, date, time, attendeeEmail, clientId, team } = await req.json()
+    const { title, description, date, time, attendeeEmail, clientId, team, teamName } = await req.json()
     const teamSlug = team || 'siao'
 
     if (!date || !time || !title) {
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     const accessToken = await getAccessToken(supabase)
 
     const calendarId = TEAM_CALENDARS[teamSlug] || TEAM_CALENDARS['siao']
-    const teamName = teamSlug.charAt(0).toUpperCase() + teamSlug.slice(1)
+    const resolvedTeamName = teamName || teamSlug.charAt(0).toUpperCase() + teamSlug.slice(1)
 
     let googleEventId = ''
     let meetLink = ''
@@ -67,8 +67,8 @@ Deno.serve(async (req) => {
       const endDateTime = `${date}T${endHour}:${time.split(':')[1]}:00`
 
       const event: any = {
-        summary: title,
-        description: `[Equipe ${teamName}] ${description || `Reunião de alinhamento com ${title.replace('Reunião — ', '')}`}`,
+        summary: `Reunião | ${resolvedTeamName} - ${title.replace('Reunião — ', '')}`,
+        description: `[Equipe ${resolvedTeamName}] ${description || `Reunião de alinhamento com ${title.replace('Reunião — ', '')}`}`,
         start: { dateTime: startDateTime, timeZone: 'America/Sao_Paulo' },
         end: { dateTime: endDateTime, timeZone: 'America/Sao_Paulo' },
         conferenceData: {

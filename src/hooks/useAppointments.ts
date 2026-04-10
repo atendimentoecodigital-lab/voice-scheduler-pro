@@ -58,16 +58,18 @@ export function useAppointments(teamSlug?: string) {
     attendeeEmail?: string;
     description?: string;
     team?: string;
+    teamName?: string;
   }) => {
     const { data, error } = await supabase.functions.invoke("calendar-create-event", {
       body: {
-        title: `Reunião — ${params.clientName}`,
+        title: params.clientName,
         description: params.description || `Reunião de alinhamento com ${params.clientName}`,
         date: params.date,
         time: params.time,
         attendeeEmail: params.attendeeEmail,
         clientId: params.clientId,
         team: params.team,
+        teamName: params.teamName,
       },
     });
     if (error) throw error;
