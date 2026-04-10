@@ -16,7 +16,7 @@ export type AppointmentItem = {
 export type SlotItem = { time: string; available: boolean };
 export type DayAvailabilityItem = { date: string; dayName: string; slots: SlotItem[] };
 
-export function useAppointments() {
+export function useAppointments(teamSlug?: string) {
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [availability, setAvailability] = useState<DayAvailabilityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,7 @@ export function useAppointments() {
     try {
       const [aptsRes, availRes] = await Promise.all([
         supabase.functions.invoke("calendar-get-appointments"),
-        supabase.functions.invoke("calendar-get-availability"),
+        supabase.functions.invoke("calendar-get-availability", { body: { team: teamSlug } }),
       ]);
 
       if (aptsRes.error) throw aptsRes.error;
@@ -81,7 +81,7 @@ export function useAppointments() {
     if (data?.url) window.location.href = data.url;
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [teamSlug]);
 
   return {
     appointments,

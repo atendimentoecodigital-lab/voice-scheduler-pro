@@ -7,6 +7,7 @@ export type Team = {
   slug: string;
   color: string;
   description: string;
+  calendar_id: string;
   created_at: string;
 };
 
@@ -22,9 +23,9 @@ type TeamContextType = {
 const TeamContext = createContext<TeamContextType | null>(null);
 
 const DEFAULT_TEAMS: Team[] = [
-  { id: "1", name: "Sião", slug: "siao", color: "#6B7280", description: "Equipe Sião", created_at: "" },
-  { id: "2", name: "Juda", slug: "juda", color: "#DC2626", description: "Equipe Juda", created_at: "" },
-  { id: "3", name: "Arca", slug: "arca", color: "#2563EB", description: "Equipe Arca", created_at: "" },
+  { id: "1", name: "Sião", slug: "siao", color: "#6B7280", description: "Equipe Sião", calendar_id: "e97b5158a1c8cc6b0e44096ccb8f99d2b52fd6a25c144573348cc18be3961de0@group.calendar.google.com", created_at: "" },
+  { id: "2", name: "Juda", slug: "juda", color: "#DC2626", description: "Equipe Juda", calendar_id: "0129971c7ce7226946a90e1945ae5d08cbb67e18f1f2f4f37cec80769b945a02@group.calendar.google.com", created_at: "" },
+  { id: "3", name: "Arca", slug: "arca", color: "#2563EB", description: "Equipe Arca", calendar_id: "e38d5610a8720a788c358e19e267d1968f4eeb2b41d86a073d99ae93640dcf14@group.calendar.google.com", created_at: "" },
 ];
 
 export function TeamProvider({ children }: { children: ReactNode }) {

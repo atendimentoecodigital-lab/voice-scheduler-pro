@@ -200,6 +200,7 @@ export type Database = {
       }
       teams: {
         Row: {
+          calendar_id: string
           color: string
           created_at: string | null
           description: string | null
@@ -208,6 +209,7 @@ export type Database = {
           slug: string
         }
         Insert: {
+          calendar_id?: string
           color: string
           created_at?: string | null
           description?: string | null
@@ -216,6 +218,7 @@ export type Database = {
           slug: string
         }
         Update: {
+          calendar_id?: string
           color?: string
           created_at?: string | null
           description?: string | null
