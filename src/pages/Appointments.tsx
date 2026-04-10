@@ -45,8 +45,9 @@ export default function Appointments() {
         date: form.date,
         time: form.time,
         attendeeEmail: client.email,
-        description: `Reunião de alinhamento com ${client.name} — ${client.company} [Equipe: ${currentTeam?.name || selectedTeam}]`,
+        description: `Reunião de alinhamento com ${client.name} — ${client.company}`,
         team: selectedTeam,
+        teamName: currentTeam?.name || selectedTeam,
       });
       toast.success(connected ? "Reunião criada no Google Agenda!" : "Reunião salva localmente!");
       setNewDialog(false);
