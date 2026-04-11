@@ -75,11 +75,15 @@ Deno.serve(async (req) => {
 
   try {
     const payload = await req.json()
-    const phone = payload.phone || ''
-    const messageText = payload.message?.text || payload.message?.body || ''
+    console.log('Raw Z-API payload:', JSON.stringify(payload))
+
+    const phone = payload.phone || payload.participantPhone || ''
+    const messageText = payload.text?.message || payload.message?.text || payload.message?.body || (typeof payload.text === 'string' ? payload.text : '')
+
+    console.log('Extracted phone:', phone, 'message:', messageText)
 
     if (!phone || !messageText) {
-      return new Response(JSON.stringify({ error: 'Missing phone or message text' }), {
+      return new Response(JSON.stringify({ error: 'Missing phone or message text', rawPayload: payload }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
