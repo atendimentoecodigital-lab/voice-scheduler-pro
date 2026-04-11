@@ -228,6 +228,47 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_messages: {
+        Row: {
+          client_id: string | null
+          client_name: string | null
+          created_at: string
+          direction: string
+          id: string
+          message_text: string
+          phone: string
+          team_slug: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          message_text?: string
+          phone: string
+          team_slug?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          message_text?: string
+          phone?: string
+          team_slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
