@@ -115,9 +115,17 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const sanitized = sanitizePhone(phone)
 
-    // Find client by phone
+    // Find client by phone — try exact and with 9 inserted after area code
+    const sanitizedWith9 = (sanitized.startsWith('55') && sanitized.length === 12)
+      ? sanitized.slice(0, 4) + '9' + sanitized.slice(4)
+      : null
+    const phonesToMatch = sanitizedWith9 ? [sanitized, sanitizedWith9] : [sanitized]
+
     const { data: clients } = await supabase.from('clients').select('*')
-    const client = clients?.find((c: any) => sanitizePhone(c.phone || '') === sanitized)
+    const client = clients?.find((c: any) => {
+      const stored = sanitizePhone(c.phone || '')
+      return phonesToMatch.includes(stored)
+    })
 
     const clientId = client?.id || null
     const clientName = client?.name || phone
