@@ -46,12 +46,15 @@ function extractTime(text: string): string | null {
   const match = lower.match(/\b(\d{1,2})\s*(?:h|:00|hrs?)?\b/)
   if (match) {
     const hour = parseInt(match[1])
-    if (hour >= 8 && hour <= 18) {
+    if (hour >= 7 && hour <= 20) {
       return `${String(hour).padStart(2, '0')}:00`
     }
   }
   return null
 }
+
+const VALID_DAYS = new Set([2, 3, 4]) // terça, quarta, quinta
+const VALID_TIMES = new Set(['14:00', '15:00', '16:00'])
 
 function hasInterest(text: string): boolean {
   const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -144,6 +147,35 @@ Deno.serve(async (req) => {
     // Parse day and time
     const dayOfWeek = extractDay(messageText)
     const time = extractTime(messageText)
+
+    // VALIDATION: Check if mentioned day/time is outside allowed schedule
+    const hasInvalidDay = dayOfWeek !== null && !VALID_DAYS.has(dayOfWeek)
+    const hasInvalidTime = time !== null && !VALID_TIMES.has(time)
+
+    if (hasInvalidDay || hasInvalidTime) {
+      const invalidMsg = `Ops! 😅 Esse horário não está disponível na nossa agenda padrão.\n\nNossos horários de atendimento são:\n📅 Terça, Quarta ou Quinta\n⏰ 14h, 15h ou 16h\n\nPara agendar em outro horário, entre em contato diretamente com seu analista. 😊`
+
+      await sendWhatsAppMessage(sanitized, invalidMsg)
+
+      await supabase.from('whatsapp_messages').insert({
+        client_id: clientId,
+        client_name: clientName,
+        phone: sanitized,
+        message_text: invalidMsg,
+        direction: 'outgoing',
+        team_slug: teamSlug,
+      })
+
+      return new Response(JSON.stringify({
+        action: 'invalid_schedule',
+        client: clientName,
+        detectedDay: dayOfWeek,
+        detectedTime: time,
+        messageSent: true,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // IMPROVEMENT 1: Schedule + send confirmation
     if (dayOfWeek !== null && time !== null && client) {
