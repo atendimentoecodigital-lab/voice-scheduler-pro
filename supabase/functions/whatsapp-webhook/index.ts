@@ -8,6 +8,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
+const ZAPI_INSTANCE = '3F17C7660DEA1383DCA1AAE399BC1248'
+const ZAPI_TOKEN = '43DD63BAE862B0D18A7F3A25'
+const ZAPI_CLIENT_TOKEN = Deno.env.get('ZAPI_CLIENT_TOKEN') || 'F66bc26f3c70e493dbf4e8cecd59b3509S'
+
 const DAY_MAP: Record<string, number> = {
   'domingo': 0, 'dom': 0,
   'segunda': 1, 'seg': 1,
@@ -18,8 +22,9 @@ const DAY_MAP: Record<string, number> = {
   'sabado': 6, 'sábado': 6, 'sab': 6,
 }
 
-const TIME_PATTERNS = ['14h', '15h', '16h', '17h', '10h', '11h', '09h', '08h']
-const HOUR_REGEX = /\b(\d{1,2})\s*h?\b/g
+const INTEREST_WORDS = ['sim', 'pode', 'quero', 'interesse', 'ok', 'topo', 'claro', 'vamos', 'bora', 'ótimo', 'otimo', 'perfeito', 'combinado']
+
+const MONTH_NAMES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
 
 function sanitizePhone(phone: string): string {
   return phone.replace(/\D/g, '')
@@ -28,8 +33,6 @@ function sanitizePhone(phone: string): string {
 function extractDay(text: string): number | null {
   const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const original = text.toLowerCase()
-
-  // Check original text first (for accented chars like terça)
   for (const [key, val] of Object.entries(DAY_MAP)) {
     if (original.includes(key) || lower.includes(key.normalize('NFD').replace(/[\u0300-\u036f]/g, ''))) {
       return val
@@ -40,8 +43,6 @@ function extractDay(text: string): number | null {
 
 function extractTime(text: string): string | null {
   const lower = text.toLowerCase()
-
-  // Match patterns like "14h", "15h", "14:00", "às 14"
   const match = lower.match(/\b(\d{1,2})\s*(?:h|:00|hrs?)?\b/)
   if (match) {
     const hour = parseInt(match[1])
@@ -52,6 +53,11 @@ function extractTime(text: string): string | null {
   return null
 }
 
+function hasInterest(text: string): boolean {
+  const lower = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return INTEREST_WORDS.some(w => lower.includes(w.normalize('NFD').replace(/[\u0300-\u036f]/g, '')))
+}
+
 function getNextOccurrence(dayOfWeek: number): string {
   const now = new Date()
   const today = now.getDay()
@@ -60,6 +66,24 @@ function getNextOccurrence(dayOfWeek: number): string {
   const target = new Date(now)
   target.setDate(now.getDate() + daysAhead)
   return target.toISOString().split('T')[0]
+}
+
+function formatDatePtBr(dateStr: string): string {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  const dayNames = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
+  return `${dayNames[date.getDay()]}, ${String(day).padStart(2, '0')} de ${MONTH_NAMES[month - 1]} de ${year}`
+}
+
+async function sendWhatsAppMessage(phone: string, message: string) {
+  await fetch(`https://api.z-api.io/instances/${ZAPI_INSTANCE}/token/${ZAPI_TOKEN}/send-text`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Client-Token': ZAPI_CLIENT_TOKEN,
+    },
+    body: JSON.stringify({ phone, message }),
+  })
 }
 
 Deno.serve(async (req) => {
@@ -91,7 +115,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const sanitized = sanitizePhone(phone)
 
-    // Find client by phone (compare digits only)
+    // Find client by phone
     const { data: clients } = await supabase.from('clients').select('*')
     const client = clients?.find((c: any) => sanitizePhone(c.phone || '') === sanitized)
 
@@ -99,7 +123,7 @@ Deno.serve(async (req) => {
     const clientName = client?.name || phone
     const teamSlug = client?.team || 'siao'
 
-    // Save message
+    // Save incoming message
     await supabase.from('whatsapp_messages').insert({
       client_id: clientId,
       client_name: clientName,
@@ -109,19 +133,17 @@ Deno.serve(async (req) => {
       team_slug: teamSlug,
     })
 
-    // Parse day and time from message
+    // Parse day and time
     const dayOfWeek = extractDay(messageText)
     const time = extractTime(messageText)
 
+    // IMPROVEMENT 1: Schedule + send confirmation
     if (dayOfWeek !== null && time !== null && client) {
-      // Schedule appointment
       const date = getNextOccurrence(dayOfWeek)
 
-      // Get team name
       const { data: team } = await supabase.from('teams').select('name').eq('slug', teamSlug).single()
       const teamName = team?.name || teamSlug.charAt(0).toUpperCase() + teamSlug.slice(1)
 
-      // Call calendar-create-event
       const createEventUrl = `${SUPABASE_URL}/functions/v1/calendar-create-event`
       const eventRes = await fetch(createEventUrl, {
         method: 'POST',
@@ -142,8 +164,25 @@ Deno.serve(async (req) => {
       })
       const eventData = await eventRes.json()
 
-      // Update client status
       await supabase.from('clients').update({ status: 'agendado' }).eq('id', client.id)
+
+      // Send confirmation via WhatsApp
+      const meetLink = eventData.meetLink || 'Link será enviado em breve'
+      const formattedDate = formatDatePtBr(date)
+      const hourStr = time.replace(':00', '')
+      const confirmMsg = `Perfeito, ${clientName}! ✅\n\nSua reunião foi agendada com sucesso!\n\n📅 ${formattedDate}\n⏰ ${hourStr}h00\n📹 Meet: ${meetLink}\n\nTe esperamos lá! Qualquer dúvida é só chamar aqui. 😊`
+
+      await sendWhatsAppMessage(sanitized, confirmMsg)
+
+      // Save outgoing message
+      await supabase.from('whatsapp_messages').insert({
+        client_id: clientId,
+        client_name: clientName,
+        phone: sanitized,
+        message_text: confirmMsg,
+        direction: 'outgoing',
+        team_slug: teamSlug,
+      })
 
       return new Response(JSON.stringify({
         action: 'scheduled',
@@ -153,14 +192,70 @@ Deno.serve(async (req) => {
         team: teamSlug,
         appointment: eventData.appointment,
         meetLink: eventData.meetLink,
+        confirmationSent: true,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    // If message shows interest but no specific time
-    if (client && client.status === 'pendente') {
-      await supabase.from('clients').update({ status: 'em_contato' }).eq('id', client.id)
+    // IMPROVEMENT 2: Interest detected → send available slots
+    if (client && hasInterest(messageText)) {
+      // Update status if pendente
+      if (client.status === 'pendente') {
+        await supabase.from('clients').update({ status: 'em_contato' }).eq('id', client.id)
+      }
+
+      // Fetch availability
+      const availRes = await fetch(`${SUPABASE_URL}/functions/v1/calendar-get-availability`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        },
+        body: JSON.stringify({ team: teamSlug }),
+      })
+      const availData = await availRes.json()
+
+      if (availData.availability && availData.availability.length > 0) {
+        // Build message with available slots only
+        let slotsMsg = `Oi ${clientName}! 😊 Temos os seguintes horários disponíveis:\n\n`
+        let hasSlots = false
+
+        for (const day of availData.availability) {
+          const availableSlots = day.slots.filter((s: any) => s.available)
+          if (availableSlots.length === 0) continue
+          hasSlots = true
+
+          const [y, m, d] = day.date.split('-').map(Number)
+          const dateFormatted = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`
+          const slotsFormatted = availableSlots.map((s: any) => `${s.time.replace(':00', '')}h00 ✅`).join(' | ')
+          slotsMsg += `📅 ${day.dayName}, ${dateFormatted} → ${slotsFormatted}\n`
+        }
+
+        slotsMsg += `\nQual desses horários fica melhor pra você?`
+
+        if (hasSlots) {
+          await sendWhatsAppMessage(sanitized, slotsMsg)
+
+          await supabase.from('whatsapp_messages').insert({
+            client_id: clientId,
+            client_name: clientName,
+            phone: sanitized,
+            message_text: slotsMsg,
+            direction: 'outgoing',
+            team_slug: teamSlug,
+          })
+
+          return new Response(JSON.stringify({
+            action: 'availability_sent',
+            client: clientName,
+            newStatus: client.status === 'pendente' ? 'em_contato' : client.status,
+            slotsSent: true,
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+      }
 
       return new Response(JSON.stringify({
         action: 'status_updated',
