@@ -225,24 +225,34 @@ Deno.serve(async (req) => {
       const availData = await availRes.json()
 
       if (availData.availability && availData.availability.length > 0) {
-        // Build message with available slots only
-        let slotsMsg = `Oi ${clientName}! 😊 Temos os seguintes horários disponíveis:\n\n`
-        let hasSlots = false
+        const allowedDays = ['Terça', 'Quarta', 'Quinta']
+        const seenDays = new Set<string>()
+        const filteredDays: any[] = []
 
         for (const day of availData.availability) {
-          const availableSlots = day.slots.filter((s: any) => s.available)
-          if (availableSlots.length === 0) continue
-          hasSlots = true
-
-          const [y, m, d] = day.date.split('-').map(Number)
-          const dateFormatted = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`
-          const slotsFormatted = availableSlots.map((s: any) => `${s.time.replace(':00', '')}h00 ✅`).join(' | ')
-          slotsMsg += `📅 ${day.dayName}, ${dateFormatted} → ${slotsFormatted}\n`
+          if (!allowedDays.includes(day.dayName) || seenDays.has(day.dayName)) continue
+          seenDays.add(day.dayName)
+          filteredDays.push(day)
+          if (filteredDays.length === 3) break
         }
 
-        slotsMsg += `\nQual desses horários fica melhor pra você?`
+        if (filteredDays.length > 0) {
+          let slotsMsg = `Perfeito, ${clientName}! 🤩 Temos os seguintes horários disponíveis 👇\n`
 
-        if (hasSlots) {
+          for (const day of filteredDays) {
+            const [, m, d] = day.date.split('-').map(Number)
+            const dateFormatted = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`
+            const slotTimes = ['14:00', '15:00', '16:00']
+            const slotsFormatted = slotTimes.map(t => {
+              const slot = day.slots.find((s: any) => s.time === t)
+              const icon = slot?.available ? '✅' : '❌'
+              return `${t.replace(':00', '')}h ${icon}`
+            }).join(' | ')
+            slotsMsg += `\n📅 ${day.dayName}, ${dateFormatted}\n${slotsFormatted}\n`
+          }
+
+          slotsMsg += `\nPara agendar é só responder com o dia e horário que preferir! 😊`
+
           await sendWhatsAppMessage(sanitized, slotsMsg)
 
           await supabase.from('whatsapp_messages').insert({
