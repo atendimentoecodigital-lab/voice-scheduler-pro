@@ -12,6 +12,9 @@ const ZAPI_INSTANCE = '3F17C7660DEA1383DCA1AAE399BC1248'
 const ZAPI_TOKEN = '43DD63BAE862B0D18A7F3A25'
 const ZAPI_CLIENT_TOKEN = Deno.env.get('ZAPI_CLIENT_TOKEN') || 'F66bc26f3c70e493dbf4e8cecd59b3509S'
 
+const openaiKey = Deno.env.get("OPENAI_API_KEY")
+console.log("OPENAI KEY:", openaiKey)
+
 const DAY_MAP: Record<string, number> = {
   'domingo': 0, 'dom': 0,
   'segunda': 1, 'seg': 1,
